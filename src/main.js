@@ -1,47 +1,80 @@
+/**
+ * Demo de cubo en Three.js con movimiento horizontal.
+ */
+
 import {
   BoxGeometry,
-  MeshBasicMaterial,
   Mesh,
+  MeshBasicMaterial,
   PerspectiveCamera,
   Scene,
-  WebGLRenderer
-
+  WebGLRenderer,
 } from 'three';
 
-
-// paso 1: crear la escena
+// Escena
 const scene = new Scene();
 
-// crear la cámara
-const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+// Cámara
+const camera = new PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000,
+);
 
-// paso 2: crear el renderizador
+// Alejar la cámara para tener un rango visual más amplio del movimiento en el eje X.
+camera.position.z = 50;
+
+// Renderizador
 const renderer = new WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-// paso 3: inicializar los objetos 3d
-const geometry = new BoxGeometry(1, 1, 1);
-const material = new MeshBasicMaterial({ color: 0x00ff00 });
+// Malla del cubo
+const geometry = new BoxGeometry(6, 6, 6);
+// const material = new MeshBasicMaterial({ color: 0x00ff00, wireframe: true }); // Ejemplo básico sin color - con wireframe
+ const material = new MeshBasicMaterial({ color: 0xff6b6b, wireframe: false }); // Ejemplo con color sólido - sin wireframe
 const cube = new Mesh(geometry, material);
-
-// paso 4: agregar los objetos a la escena
 scene.add(cube);
 
-// paso 5: renderizar la escena
-const clockStart = performance.now();
+// Variables de posición para controlar la ubicación del cubo en todos los ejes.
+let positionX = -40; // Inicia en el lado izquierdo
+const positionY = 0;
+const positionZ = 20;
+
+// Variables de estado que controlan el rebote horizontal.
+let direction = 1; // 1 = mover a la derecha, -1 = mover a la izquierda
+const speed = 0.1; // Unidades por frame
+const boundary = 40; // Límite izquierda/derecha
 
 function animate() {
   requestAnimationFrame(animate);
-  const elapsedSeconds = (performance.now() - clockStart) / 1000;
 
-  // Mueve el cubo horizontalmente de izquierda a derecha en bucle.
-  cube.position.x = Math.sin(elapsedSeconds * 1.5) * 2;
+  // Actualiza la posición y revierte la dirección en los límites.
+  positionX += speed * direction;
+
+  if (positionX >= boundary) {
+    positionX = boundary;
+    direction = -1;
+  } else if (positionX <= -boundary) {
+    positionX = -boundary;
+    direction = 1;
+  }
+
+  // Aplica la posición calculada al cubo en x, y, z.
+  cube.position.set(positionX, positionY, positionZ);
+
+  // Rotación existente del ejemplo base
   cube.rotation.x += 0.01;
   cube.rotation.y += 0.01;
+
   renderer.render(scene, camera);
 }
 animate();
 
-// paso 6: agregar el renderizador al DOM
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+// Redimensionado de la ventana del navegador
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
